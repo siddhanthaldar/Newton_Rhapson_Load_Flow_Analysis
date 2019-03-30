@@ -5,13 +5,13 @@ prompt = 'No. of machines:';
 nms = input(prompt);
 
 % Read bus_dat
-fileID = fopen('bus_dat.txt','r');
+fileID = fopen('test_bus.txt','r');
 formatSpec = '%d %d %f %f %f %f %f %f';
 bus_dat = fscanf(fileID,formatSpec);
 bus_dat =reshape(bus_dat,8,nbs);  %each column contains data for one bus
 
 % Read line_dat
-fileID = fopen('line_dat.txt','r');
+fileID = fopen('test_line.txt','r');
 formatSpec = '%d %d %f %f %f %f';
 line_dat = fscanf(fileID,formatSpec);
 n_lines = length(line_dat)/6;
@@ -167,8 +167,9 @@ while 1
         end
     end
 
+    %{
     % Gradients using inverse
-    grad = J\mismatch';        
+    grad = J\mismatch';
 
     % Update theta
     for x=1:nbs-1
@@ -177,6 +178,40 @@ while 1
     % Update V
     for x=1:nbs-nms
         bus_dat(3,x) = bus_dat(3,x) + grad(x+nbs-1)*bus_dat(3,x);  % since del_V/V calculated, multiple by V
+    end
+    %}
+
+    %%{
+    % Gradients using Gaussian Elimination
+    J'
+    gauss_var = [J';mismatch]
+    [d,var_num] = size(gauss_var);
+    grad = zeros(var_num,1);
+
+    % Obtain augmented matrix
+    for x=1:var_num-1
+        for y=x+1:var_num
+           for z=var_num+1:-1:1
+               gauss_var(z,y) = gauss_var(z,y) - gauss_var(z,x)*gauss_var(x,y)/gauss_var(x,x);
+           end
+        end
+    end
+
+    % Solve
+    for x=var_num:-1:1
+        for y=var_num:-1:x+1
+            grad(x,1) = grad(x,1)+ grad(y,1)*gauss_var(y,x);
+        end
+        grad(x,1) = (gauss_var(var_num+1,x)-grad(x,1))/gauss_var(x,x);
+    end
+
+    % Update theta
+    for x=1:nbs-1
+        bus_dat(4,x) = bus_dat(4,x) + grad(x,1);
+    end
+    % Update V
+    for x=1:nbs-nms
+        bus_dat(3,x) = bus_dat(3,x) + grad(x+nbs-1,1)*bus_dat(3,x);  % since del_V/V calculated, multiple by V
     end
 
 end
