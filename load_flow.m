@@ -17,6 +17,26 @@ line_dat = fscanf(fileID,formatSpec);
 n_lines = length(line_dat)/6;
 line_dat =reshape(line_dat,6,n_lines);  %each column contains data for one line
 
+load_bus = zeros(8,nbs-nms);
+PV_bus = zeros(8,nms-1);
+slack = zeros(8,1);
+load_it = 0;
+PV_it = 0;
+
+% Arrange bus_data in order load_bus, PV bus, slack bus
+for i=1:nbs
+    if bus_dat(2,i) == 101
+        load_it = load_it + 1;
+        load_bus(:,load_it) = bus_dat(:,i);
+    elseif bus_dat(2,i) == 102
+        PV_it = PV_it + 1;
+        PV_bus(:,PV_it) = bus_dat(:,i);
+    elseif bus_dat(2,i) == 103
+        slack(:,1) = bus_dat(:,i);
+    end
+end
+bus_dat = [load_bus, PV_bus, slack];
+
 % Formulate Ybus
 Ybus = zeros(nbs,nbs);
 for x=1:nbs   %row
@@ -48,7 +68,7 @@ end
 
 % Newton Rhapson Solver
 % tolerance
-tol = 0.001;
+tol = 0.0001;
 
 while 1
     % Mismatch vector calculation
@@ -89,8 +109,8 @@ while 1
     end
 
     mismatch = [del_P,del_Q];
-
-    if sum(mismatch>0.1)==0
+    
+    if abs(mismatch)<tol
         break;
     end
 
@@ -183,8 +203,7 @@ while 1
 
     %%{
     % Gradients using Gaussian Elimination
-    J'
-    gauss_var = [J';mismatch]
+    gauss_var = [J';mismatch];
     [d,var_num] = size(gauss_var);
     grad = zeros(var_num,1);
 
@@ -215,6 +234,65 @@ while 1
     end
 
 end
+
+% Print bus voltage magnitude(in p.u) and angle after convergence
+disp('   ')
+disp('Bus Voltage Magnitude(in p.u.) : ')
+disp(bus_dat(3,:))
+
+disp('Angle :')
+disp(bus_dat(4,:)*180/pi)
+
+% Active and reactive power calculation at all buses
+P = zeros(1,nbs);
+Q = zeros(1,nbs);
+for i=1:nbs
+    for it=1:nbs
+        ang = bus_dat(4,i)-bus_dat(4,it);
+        re = real(Ybus(i,it));
+        img = imag(Ybus(i,it)); 
+        P(1,i) = P(1,i) + bus_dat(3,i)*bus_dat(3,it)*(re*cos(ang)+img*sin(ang));
+        Q(1,i) = Q(1,i) + bus_dat(3,i)*bus_dat(3,it)*(re*sin(ang)-img*cos(ang));
+    end
+end
+
+disp('Active power at all buses :')
+disp(P)
+disp('Reactive power at all buses :')
+disp(Q)
+
+% Reactive power generation at PV buses
+react_gen = zeros(1,nbs-nms);
+tot_react_pow_gen = 0;
+for i=nbs-nms+1:nbs-1
+    react_gen(1,i-(nbs-nms)) = Q(1,i) + bus_dat(8,i);
+    tot_react_pow_gen = tot_react_pow_gen + react_gen(1,i-(nbs-nms));
+end
+
+disp('Reactive power generated at P-V buses :')
+disp(react_gen)
+disp('Total reactive power generated at P-V buses :')
+disp(tot_react_pow_gen)
+
+% Calculate complex power flow
+complex_pow_flow = zeros(n_lines,3);
+for i=1:n_lines
+    Z = line_dat(3,i) + 1i*line_dat(4,i);
+    A = 1 + Z*(1i*line_dat(5,i))/2;
+    B = Z;
+    Vs = bus_dat(3,line_dat(1,i))*exp(1i*bus_dat(4,line_dat(1,i))*180/pi);
+    Vr = bus_dat(3,line_dat(2,i))*exp(1i*bus_dat(4,line_dat(2,i))*180/pi);
+    Ir = (Vs - A*Vr)/B;
+    
+    complex_pow_flow(i,1) = line_dat(1,i); % Sending end
+    complex_pow_flow(i,2) = line_dat(2,i); % Receiving end
+    complex_pow_flow(i,3) = Vr*conj(Ir);
+end
+
+disp('Complex power flow in lines(from sending to receiving end) :')
+disp(complex_pow_flow)
+
+    
 
 
 
