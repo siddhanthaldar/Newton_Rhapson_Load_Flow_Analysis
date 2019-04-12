@@ -35,7 +35,38 @@ for i=1:nbs
         slack(:,1) = bus_dat(:,i);
     end
 end
+load_bus
+PV_bus
+%sort load bus
+load = zeros(nbs-nms,2);
+bus = zeros(8,nbs-nms);
+for i=1:nbs-nms
+    load(i,1) = i;
+    load(i,2) = load_bus(1,i);
+end
+
+load(:,2) = sort(load(:,2));
+for i=1:nbs-nms
+    bus(:,load(i,1)) = bus_dat(:,load(i,2));
+end
+load_bus = bus;
+
+
+%sort PV bus
+load1 = zeros(nms-1,2);
+bus1 = zeros(8,nms-1);
+for i=1:nms-1
+    load1(i,1) = i;
+    load1(i,2) = PV_bus(1,i);
+end
+load1(:,2) = sort(load1(:,2));
+for i=1:nms-1
+    bus1(:,load1(i,1)) = bus_dat(:,load1(i,2));
+end
+PV_bus = bus1;
+
 bus_dat = [load_bus, PV_bus, slack];
+
 
 % Formulate Ybus
 Ybus = zeros(nbs,nbs);
@@ -241,7 +272,7 @@ disp('Bus Voltage Magnitude(in p.u.) : ')
 disp(bus_dat(3,:))
 
 disp('Angle :')
-disp(bus_dat(4,:)*180/pi)
+disp(bus_dat(4,:))
 
 % Active and reactive power calculation at all buses
 P = zeros(1,nbs);
@@ -260,9 +291,11 @@ disp('Active power at all buses :')
 disp(P)
 disp('Reactive power at all buses :')
 disp(Q)
+disp('Total active power loss')
+disp(sum(P))
 
 % Reactive power generation at PV buses
-react_gen = zeros(1,nbs-nms);
+react_gen = zeros(1,nms-1);
 tot_react_pow_gen = 0;
 for i=nbs-nms+1:nbs-1
     react_gen(1,i-(nbs-nms)) = Q(1,i) + bus_dat(8,i);
@@ -280,8 +313,8 @@ for i=1:n_lines
     Z = line_dat(3,i) + 1i*line_dat(4,i);
     A = 1 + Z*(1i*line_dat(5,i))/2;
     B = Z;
-    Vs = bus_dat(3,line_dat(1,i))*exp(1i*bus_dat(4,line_dat(1,i))*180/pi);
-    Vr = bus_dat(3,line_dat(2,i))*exp(1i*bus_dat(4,line_dat(2,i))*180/pi);
+    Vs = bus_dat(3,line_dat(1,i))*exp(1i*bus_dat(4,line_dat(1,i)));%*180/pi);
+    Vr = bus_dat(3,line_dat(2,i))*exp(1i*bus_dat(4,line_dat(2,i)));%*180/pi);
     Ir = (Vs - A*Vr)/B;
     
     complex_pow_flow(i,1) = line_dat(1,i); % Sending end
@@ -291,8 +324,6 @@ end
 
 disp('Complex power flow in lines(from sending to receiving end) :')
 disp(complex_pow_flow)
-
-    
 
 
 
