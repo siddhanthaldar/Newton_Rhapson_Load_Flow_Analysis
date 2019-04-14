@@ -15,12 +15,12 @@ The input data is provided in the text files *bus_dat.txt* and *line_dat.txt* in
 | 5 | 102 | 1.03 | 0 | 0.75 | 0 | 0.30 | 0.10 |
 | 6 | 103 | 1.02 | 0 | 0 | 0 | 0 | 0 |
 
-**101 : P-Q Bus;    102 : P-|V| Bus;    103 : |V|-\theta Bus**
+**101 : P-Q Bus;    102 : P-|V| Bus;    103 : |V|-$\theta$ Bus**
 
 Number of buses :  
 P-Q Bus = 4  
 P-|V| Bus = 1  
-|V|-\theta Bus = 1  
+|V|-$\theta$ Bus = 1  
 
 ### Line Data
 
