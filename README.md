@@ -17,15 +17,15 @@ The input data is provided in the text files *bus_dat.txt* and *line_dat.txt* in
 
 **101 : P-Q Bus;    102 : P-|V| Bus;    103 : |V|-\theta Bus**
 
-Number of buses :
-P-Q Bus = 4
-P-|V| Bus = 1
-|V|-\theta Bus = 1
+Number of buses :  
+P-Q Bus = 4  
+P-|V| Bus = 1  
+|V|-\theta Bus = 1  
 
 ### Line Data
 
 | From Bus | To Bus | Resistance r(p.u.) | Reactance x(p.u.) | Line Charging B(p.u.) | ONR |
-|---------|----------|---------------|------------|--------|----------|-----------|-------------|
+|---------|----------|---------------|------------|--------|----------|
 | 6 | 2  | 0.080 | 0.370 | 0.280 | 1.000 |
 | 6 | 4 | 0.123 | 0.518 | 0.400 | 1.000 |
 | 5 | 1 | 0.723 | 1.050 | 0.200 | 1.000 |
